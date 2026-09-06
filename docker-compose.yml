@@ -1,0 +1,69 @@
+services:
+
+  # ---------- 1. API prediksi ----------
+  api:
+    build: .
+    container_name: rumahin-api
+    ports:
+      # Port bisa diganti tanpa mengedit file ini:  API_PORT=8001 docker compose up -d
+      - "${API_PORT:-8000}:8000"
+    environment:
+      # Di dalam container kita TIDAK menyambung ke mlflow.db di laptop.
+      # Model champion sudah diekspor ke models/champion/ oleh src/train.py.
+      # Di produksi sungguhan, MLflow dijalankan sebagai server tersendiri
+      # (satu service lagi di file ini) dan API menyambung ke server itu.
+      - SUMBER_MODEL=file
+    volumes:
+      # Supaya log dari dalam container bisa kita baca dari laptop.
+      # Ditulis dengan "sintaks panjang" (type/source/target) supaya tetap
+      # jalan walaupun path foldernya mengandung spasi atau titik dua.
+      - type: bind
+        source: ./logs
+        target: /app/logs
+    restart: unless-stopped
+
+  # ---------- 2. Prometheus: mengumpulkan angka ----------
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: rumahin-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - type: bind
+        source: ./monitoring/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ---------- 3. Grafana: menggambar angka ----------
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: rumahin-grafana
+    ports:
+      # Port 3000 sering sudah dipakai aplikasi lain (Node, AirPlay, dll).
+      # Kalau bentrok:  GRAFANA_PORT=3001 docker compose up -d
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      # Kelas saja — jangan pernah begini di produksi.
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      # Datasource + dashboard sudah disiapkan, jadi tidak perlu klik-klik manual
+      - type: bind
+        source: ./monitoring/grafana/provisioning
+        target: /etc/grafana/provisioning
+        read_only: true
+      - type: bind
+        source: ./monitoring/grafana/dashboards
+        target: /var/lib/grafana/dashboards
+        read_only: true
+    depends_on:
+      - prometheus
+    restart: unless-stopped

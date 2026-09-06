@@ -1,0 +1,375 @@
+{
+  "id": null,
+  "uid": "rumahin-mlops",
+  "title": "Rumahin — ML Model Monitoring",
+  "tags": ["day49", "mlops", "dibimbing"],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request per detik",
+      "description": "Counter dibaca sebagai LAJU (rate), bukan angka mentah.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(prediksi_total[1m])",
+          "legendFormat": "prediksi/detik",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 18,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95",
+      "description": "Persentil p95 durasi pemrosesan prediksi API.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum(rate(prediksi_latency_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p95",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 12,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "type": "stat",
+      "title": "Versi model aktif",
+      "description": "Versi model Machine Learning yang sedang melayani request.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "model_versi_aktif",
+          "legendFormat": "versi",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "mappings": [],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "⚠ Skor drift GrLivArea",
+      "description": "|rata2 live - rata2 training| / rata2 training. Hijau < 0.25, merah > 0.6.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "skor_drift_grlivarea",
+          "legendFormat": "skor drift",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.25
+              },
+              {
+                "color": "red",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Rata-rata GrLivArea (100 request terakhir)",
+      "description": "Perbandingan rata-rata fitur GrLivArea live vs baseline training (1515.0 sqft).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "input_grlivarea_rata2",
+          "legendFormat": "live",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "1515.0 + 0 * input_grlivarea_rata2",
+          "legendFormat": "rata-rata data training",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "areaft2",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rata-rata data training"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [8, 6],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {}
+    },
+    {
+      "type": "timeseries",
+      "title": "Sebaran harga prediksi (p50 / p90)",
+      "description": "Distribusi hasil prediksi harga rumah (USD).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum(rate(harga_prediksi_usd_bucket[2m])) by (le))",
+          "legendFormat": "p50",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.9, sum(rate(harga_prediksi_usd_bucket[2m])) by (le))",
+          "legendFormat": "p90",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": {
+            "fillOpacity": 14,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "type": "stat",
+      "title": "Error prediksi",
+      "description": "Jumlah error/kegagalan saat pemrosesan prediksi.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMDS"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "increase(prediksi_error_total[5m])",
+          "legendFormat": "error 5 menit",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMDS"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      }
+    }
+  ]
+}

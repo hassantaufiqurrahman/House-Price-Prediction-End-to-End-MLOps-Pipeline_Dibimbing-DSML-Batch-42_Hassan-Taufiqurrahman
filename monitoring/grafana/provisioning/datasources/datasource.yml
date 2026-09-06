@@ -1,0 +1,13 @@
+# Supaya Grafana langsung tahu di mana Prometheus-nya — tanpa klik manual.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # uid ini DIPAKAI oleh dashboards/rumahin.json.
+    # Kalau uid-nya tidak dipaku, Grafana membuat uid acak dan
+    # semua panel akan menampilkan "No data".
+    uid: PROMDS
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

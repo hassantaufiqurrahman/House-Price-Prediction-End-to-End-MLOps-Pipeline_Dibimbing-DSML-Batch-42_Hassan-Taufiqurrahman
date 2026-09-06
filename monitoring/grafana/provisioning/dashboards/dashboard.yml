@@ -1,0 +1,11 @@
+# Supaya dashboard di folder /var/lib/grafana/dashboards otomatis dimuat.
+apiVersion: 1
+providers:
+  - name: "Rumahin"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

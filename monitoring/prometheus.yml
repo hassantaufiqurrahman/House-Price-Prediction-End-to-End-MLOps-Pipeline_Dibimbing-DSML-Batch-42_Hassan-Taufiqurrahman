@@ -1,0 +1,11 @@
+# Prometheus MENGAMBIL (pull) metrik — bukan API yang mengirim (slide 53).
+global:
+  scrape_interval: 5s          # di produksi biasanya 15s; 5s biar cepat kelihatan di kelas
+
+scrape_configs:
+  - job_name: "rumahin-api"
+    metrics_path: /metrics
+    static_configs:
+      # "api" = nama service di docker-compose.yml, bukan localhost.
+      # Di dalam jaringan Docker, tiap container dipanggil pakai nama service-nya.
+      - targets: ["api:8000"]
