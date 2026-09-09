@@ -16,8 +16,8 @@ mlruns/
 data/*.csv
 logs/*.log
 
-# Models & Artifacts
-models/
+# Champion
+models/champion/
 
 # macOS junk files
 .DS_Store
